@@ -1,0 +1,25 @@
+- TODO
+  - [ ] Why 'auto_docker'
+  - [ ] Config file
+    - [ ] pull frequency manual/run/day/week
+    - [ ] Use state file
+  - [ ] auto.project.sh
+    - [ ] Add skeleton generation (Scaffolding)
+  - [ ] Logging
+  - [x] Update project
+    - [x] Dockerfile
+    - [x] README.md
+    - [x] LICENSE
+  - [x] Try build
+  - [x] Update DB
+    - [x] Alpine
+  - [x] Auto git commit
+  - [ ] Auto git push
+  - [ ] Auto update master README.md table
+  - [ ] README.md
+    - [ ] Instruction
+    - [ ] Dir tree
+    - [ ] auto.conf
+    - [ ] distro
+    - [ ] db format
+    - [ ] Doc for auto.common.sh source usage/flow

@@ -1,6 +1,8 @@
 #!/bin/bash
 
-source auto.common.sh
+COMMON="auto.common.sh"
+source ${COMMON}
+common_option ${@}
 
 # Dockerfile array hold following:
 # FROM {from}
@@ -234,17 +236,11 @@ proj_update() {
 
 # --- Main ---
 
-# Load pkg db
-
-common_option ${@}
-
 auto_db_read
-
 [ ! -d ${auto_stg_root} ] && RUN_CMD "mkdir -p ${auto_stg_root}"
 
 distro_branch_update
-
-[ ${auto_debug} ] && log "${distro_branch}"
+[ ${auto_debug} ] && log "${distro_tags}"
 
 for _docker in ${auto_proj_prefix}*; do
 	[ ${auto_debug} ] && log "---"

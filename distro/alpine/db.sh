@@ -4,6 +4,7 @@
 
 COMMON="auto.common.sh"
 source ${COMMON}
+common_option ${@}
 
 _my_path=${BASH_SOURCE[0]}
 _my_name=$(basename ${_my_path})

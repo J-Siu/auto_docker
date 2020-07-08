@@ -4,7 +4,10 @@ COMMON="auto.common.sh"
 source ${COMMON}
 
 # --- main
+[ ${auto_debug} ] && log "$(set|sort)"
 
 auto_db_update
 
-auto_project_update
+common_option ${@}
+
+auto_proj_update ${@}

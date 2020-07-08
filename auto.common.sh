@@ -17,20 +17,47 @@ common_test() {
 # {$@} Log message
 log() {
 	#	[ -n "${file_log}" ] && {echo "$@" >>${file_log}}
-	echo log:"$@"
+	echo -e log:"$@"
+}
+
+# ${@}
+common_option() {
+	for i in ${@}; do
+		case ${i} in
+		"-commit")
+			auto_commit=true # if defined/non-empty, commit & tag
+			[ ${auto_debug} ] && log "Commit"
+			;;
+		"-debug")
+			auto_debug=true # if defined/non-empty, debug mode
+			[ ${auto_debug} ] && log "Debug"
+			;;
+		"-dryrun")
+			auto_dryrun=true # if defined/non-empty, stage only, no write back, no git commit
+			[ ${auto_debug} ] && log "Dryrun"
+			;;
+		"-noskip")
+			auto_noskip=true # if defined/non-empty, process all project even no update
+			[ ${auto_debug} ] && log "No Skip"
+			;;
+		*)
+			log "Unknown option"
+			;;
+		esac
+	done
 }
 
 # ${1} CMD
 RUN_CMD() {
 	CMD=$1
+
+	[ ${auto_debug} ] && log \"$CMD\"
+
 	$CMD
 	RTN=$?
-	if [ ${RTN} -ne 0 ]; then
-		log \"$CMD\" error:${RTN}
-		exit ${RTN}
-	else
-		log \"$CMD\"
-	fi
+
+	[ ${RTN} -ne 0 ] && log \"$CMD\" error:${RTN}
+
 	return ${RTN}
 }
 
@@ -42,16 +69,18 @@ auto_db_update() {
 	done
 }
 
-auto_project_update() {
-	local CMD="${auto_project_script}"
-	RUN_CMD ${CMD}
+auto_proj_update() {
+	local CMD="${auto_proj_script} ${@}"
+	RUN_CMD "${CMD}"
 }
 
 auto_db_read() {
 	for _i in ${auto_distro}; do
 
 		local _db_path=${auto_db_root}/${_i}/${auto_db_file}
-		echo db_read:${_db_path}
+
+		[ ${auto_debug} ] && log "auto_db_read:${_db_path}"
+
 		if [ -f ${_db_path} ]; then
 			local _idx=''
 			local _ver=''
@@ -66,7 +95,6 @@ auto_db_read() {
 					2)
 						# version
 						_ver=${_line}
-						#echo "${_i}::${_idx}"=${_ver}
 						db_pkg+=(["${_i}::${_idx}"]=${_ver})
 						;;
 					esac

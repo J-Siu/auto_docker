@@ -1,3 +1,5 @@
+#!/bin/bash
+
 source auto.common.sh
 
 # Dockerfile array hold following:
@@ -8,7 +10,7 @@ source auto.common.sh
 # LABEL usage="{usage}"
 # {distro} derived from {from}
 # {tag} derived from {from}
-# {project} project/dir name
+# {proj} project/dir name
 declare -A dockerfile
 
 # List of distro::branch
@@ -25,30 +27,30 @@ distro_branch_update() {
 
 # ${1} project path
 dockerfile_get() {
-	local _dir_project=${1}
-	local _project=$(basename ${_dir_project})
-	local _dockerfile_path=${_dir_project}/Dockerfile
+	local _dir_proj=${1}
+	local _proj=$(basename ${_dir_proj})
+	local _dockerfile_path=${_dir_proj}/Dockerfile
 	for _i in version maintainers name usage; do
 		local _val=$(grep "^LABEL ${_i}" ${_dockerfile_path} | cut -d= -f2- | tail -1)
 		_val=${_val##\"} # strip first "
 		_val=${_val%%\"} # strip last "
 		dockerfile[${_i}]=${_val}
-		echo ${_i}:"${dockerfile[${_i}]}"
+		[ ${auto_debug} ] && log "${_i}:${dockerfile[${_i}]}"
 	done
 	dockerfile["from"]=$(grep "^FROM\ " ${_dockerfile_path} | cut -d' ' -f2- | tail -1)
-	echo from:"${dockerfile['from']}"
+	[ ${auto_debug} ] && log "from:${dockerfile['from']}"
 	dockerfile['distro']=${dockerfile['from']%:*}
-	echo distro:"${dockerfile['distro']}"
+	[ ${auto_debug} ] && log "distro:${dockerfile['distro']}"
 	dockerfile['tag']=${dockerfile['from']#*:}
-	echo tag:"${dockerfile['tag']}"
-	dockerfile['project']=${_project}
-	echo project:"${dockerfile['project']}"
+	[ ${auto_debug} ] && log "tag:${dockerfile['tag']}"
+	dockerfile['proj']=${_proj}
+	[ ${auto_debug} ] && log "proj:${dockerfile['proj']}"
 }
 
 dockerfile_skip() {
 
 	# testing
-	[[ ${auto_noskip} == "true" ]] && return 1 # 1=false, don't skip
+	[ ${auto_noskip} ] && return 1 # 1=false, don't skip
 
 	local _distro=${dockerfile["distro"]}
 	local _from="${dockerfile["from"],,}" # change to lowercase
@@ -58,13 +60,27 @@ dockerfile_skip() {
 
 	#echo ${_from}, ${_tag}, ${_pkg}
 
-	[[ ${_from} == *" as "* ]] && echo "Has AS" && return 0                                  # 0=true, skip, not simple
-	[[ ${distro_tags} != *"${_distro}:${_tag}"* ]] && echo "distro:tag no match" && return 0 # 0=true, skip, not edge/latest
-
+	if [[ ${_from} == *" as "* ]]; then
+		[ ${auto_debug} ] && log "Has AS"
+		return 0 # 0=true, skip, not simple
+	fi
+	if [[ ${distro_tags} != *"${_distro}:${_tag}"* ]]; then
+		[ ${auto_debug} ] && log "distro:tag no match"
+		return 0 # 0=true, skip, not edge/latest
+	fi
 	local _db_pkg_ver=$(auto_db_pkg_ver ${_distro} ${_tag} ${_pkg})
-	[[ -z ${_db_pkg_ver} ]] && echo "PKG not found" && return 0                # 0=true, skip, pkg not found
-	[[ "${_ver}" == "${_db_pkg_ver}" ]] && echo "PKG no update" && return 0    # 0=true, skip, same version
-	[[ "${_ver}" > "${_db_pkg_ver}" ]] && echo "PKG newer than db" && return 0 # 0=true, skip, doesn't make sense, oh well ...
+	if [[ -z ${_db_pkg_ver} ]]; then
+		[ ${auto_debug} ] && log "PKG not found"
+		return 0 # 0=true, skip, pkg not found
+	fi
+	if [[ "${_ver}" == "${_db_pkg_ver}" ]]; then
+		[ ${auto_debug} ] && log "PKG no update"
+		return 0 # 0=true, skip, same version
+	fi
+	if [[ "${_ver}" > "${_db_pkg_ver}" ]]; then
+		[ ${auto_debug} ] && log "PKG newer than db"
+		return 0 # 0=true, skip, doesn't make sense, oh well ...
+	fi
 
 	return 1 # 1=false, don't skip
 }
@@ -77,10 +93,10 @@ dockerfile_build() {
 	local _img="${_pkg}:${auto_stg_tag}"
 	local _curr_dir=$(pwd)
 	cd ${_dir}
-	docker build --quiet -t ${_img} .
+	RUN_CMD "docker build --quiet -t ${_img} ."
 	local _rtn=$?
 	# clean up
-	docker image rm ${_img}
+	RUN_CMD "docker image rm ${_img}"
 	cd ${_curr_dir}
 	return ${_rtn}
 }
@@ -95,19 +111,19 @@ dockerfile_update() {
 
 	# version
 	if [ -n "${_new_ver}" ]; then
-		echo ${_old_ver} '->' ${_new_ver}
+		[ ${auto_debug} ] && log "${_old_ver} '->' ${_new_ver}"
 		sed -i "s/${_old_ver}/${_new_ver}/g" ${_file}
 	fi
 
 	# maintainers
 	_action="s#^LABEL maintainers=.*#LABEL maintainers=\"${auto_git_maintainers}\"#g"
-	echo _action: ${_action}
+	[ ${auto_debug} ] && log "_action: ${_action}"
 	sed -i "${_action}" ${_file}
 
 	# usage
-	_usage="${auto_git_maintainers_url}/${dockerfile["project"]}/blob/master/README.md"
+	_usage="${auto_git_maintainers_url}/${dockerfile[proj]}/blob/master/README.md"
 	_action="s#^LABEL usage=.*#LABEL usage=\"${_usage}\"#g"
-	echo _action: ${_action}
+	[ ${auto_debug} ] && log "_action: ${_action}"
 	sed -i "${_action}" ${_file}
 }
 
@@ -140,37 +156,39 @@ readme_update() {
 	# local _new=''
 
 	# _old="https://github.com/J-Siu/docker_compose"
-	# _new="https://github.com/J-Siu/${dockerfile["project"]}"
+	# _new="https://github.com/J-Siu/${dockerfile[proj]}"
 	# sed -i "s#${_old}#${_new}#g" ${_file}
 
 	# _old="cd docker/${dockerfile["pkg"]}"
-	# _new="cd ${dockerfile["project"]}"
+	# _new="cd ${dockerfile[proj]}"
 	# sed -i "s#^${_old}.*#${_new}#g" ${_file}
 }
 
 # ${1} project dir
-project_update() {
-	local _dir_project=${1}
+proj_update() {
+	local _dir_proj=${1}
 
 	# clear global var dockerfile
 	for _j in from version maintainers name usage; do
 		dockerfile[${_j}]=''
 	done
 
-	if [ -f ${_dir_project}/Dockerfile ]; then
-		dockerfile_get ${_dir_project}
+	if [ -f ${_dir_proj}/Dockerfile ]; then
+		dockerfile_get ${_dir_proj}
 
 		# dockerfile_skip use global var dockerfile
 		if dockerfile_skip; then
-			echo skipping ${_dir_project}
+			if [ ${auto_debug} ]; then
+				log "${_dir_proj} skipped"
+			fi
 		else
-			echo processing ${_dir_project}
+			[ ${auto_debug} ] && log "${_dir_proj} processing"
 			# Staging dir
-			local _dir_stg=${auto_stg_root}/${dockerfile["project"]}
+			local _dir_stg=${auto_stg_root}/${dockerfile[proj]}
 			# Delete if staging dir exist
 			[ -d ${_dir_stg} ] && rm -rf ${_dir_stg}
 			# Copy project to staging
-			cp -r ${_dir_project} ${auto_stg_root}/
+			cp -r ${_dir_proj} ${auto_stg_root}/
 			# Update Dockerfile
 			dockerfile_update ${_dir_stg}
 			# Build
@@ -181,17 +199,17 @@ project_update() {
 				readme_update ${_dir_stg}
 				license_update ${_dir_stg}
 				# Check DRYRUN
-				if [ ${auto_dryrun} != "true" ]; then
+				if [ ${auto_dryrun} ]; then
 					# Copy from staging to project
 					for _j in Dockerfile README.md LICENSE; do
-						CMD="cp ${_dir_stg}/${_j} ${_dir_project}/"
+						CMD="cp ${_dir_stg}/${_j} ${_dir_proj}/"
 						echo $CMD
 						$CMD
 					done
 					# Git commit & tag
-					if [[ ${auto_git_commit} == "true" ]]; then
+					if [[ ${auto_commit} ]]; then
 						local _curr_dir=$(pwd)
-						cd ${_dir_project}
+						cd ${_dir_proj}
 						CMD="git add ."
 						echo $CMD
 						$CMD
@@ -205,6 +223,11 @@ project_update() {
 					fi
 				fi
 			fi
+			[ ${auto_debug} ] && log "${_dir_proj} processed"
+		fi
+	else
+		if [ ${auto_debug} ]; then
+			log "${_dir_proj} no Dockerfile"
 		fi
 	fi
 }
@@ -212,16 +235,19 @@ project_update() {
 # --- Main ---
 
 # Load pkg db
+
+common_option ${@}
+
 auto_db_read
 
-[ ! -d ${auto_stg_root} ] && mkdir -p ${auto_stg_root}
+[ ! -d ${auto_stg_root} ] && RUN_CMD "mkdir -p ${auto_stg_root}"
 
 distro_branch_update
 
-echo ${distro_branch}
+[ ${auto_debug} ] && log "${distro_branch}"
 
-for _docker in ${auto_project_prefix}*; do
-	echo ---
-	echo ${_docker}
-	project_update ${_docker}
+for _docker in ${auto_proj_prefix}*; do
+	[ ${auto_debug} ] && log "---"
+	[ ${auto_debug} ] && log "${_docker}"
+	proj_update ${_docker}
 done

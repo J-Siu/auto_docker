@@ -11,13 +11,13 @@ status_get() {
 #status_put() {}
 
 common_test() {
-	echo This is a test.
+	log "This is a test."
 }
 
 # {$@} Log message
 log() {
 	#	[ -n "${file_log}" ] && {echo "$@" >>${file_log}}
-	echo -e log:"$@"
+	echo -e "log:$@"
 }
 
 # ${@}
@@ -51,12 +51,12 @@ common_option() {
 RUN_CMD() {
 	CMD=$1
 
-	[ ${auto_debug} ] && log \"$CMD\"
+	[ ${auto_debug} ] && log "$CMD"
 
 	$CMD
 	RTN=$?
 
-	[ ${RTN} -ne 0 ] && log \"$CMD\" error:${RTN}
+	[ ${RTN} -ne 0 ] && log "$CMD error:${RTN}"
 
 	return ${RTN}
 }

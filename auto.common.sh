@@ -64,8 +64,8 @@ RUN_CMD() {
 auto_db_update() {
 	# create/update db
 	for _i in ${auto_distro}; do
-		local CMD="${auto_distro_root}/${_i}/${auto_db_script}"
-		RUN_CMD ${CMD}
+		local CMD="${auto_distro_root}/${_i}/${auto_db_script} ${@}"
+		RUN_CMD "${CMD}"
 	done
 }
 

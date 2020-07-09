@@ -37,22 +37,22 @@ dockerfile_get() {
 		_val=${_val##\"} # strip first "
 		_val=${_val%%\"} # strip last "
 		dockerfile[${_i}]=${_val}
-		[ ${auto_debug} ] && log "${_i}:${dockerfile[${_i}]}"
+		[ ${auto_option_debug} ] && log "${_i}:${dockerfile[${_i}]}"
 	done
 	dockerfile["from"]=$(grep "^FROM\ " ${_dockerfile_path} | cut -d' ' -f2- | tail -1)
-	[ ${auto_debug} ] && log "from:${dockerfile['from']}"
+	[ ${auto_option_debug} ] && log "from:${dockerfile['from']}"
 	dockerfile['distro']=${dockerfile['from']%:*}
-	[ ${auto_debug} ] && log "distro:${dockerfile['distro']}"
+	[ ${auto_option_debug} ] && log "distro:${dockerfile['distro']}"
 	dockerfile['tag']=${dockerfile['from']#*:}
-	[ ${auto_debug} ] && log "tag:${dockerfile['tag']}"
+	[ ${auto_option_debug} ] && log "tag:${dockerfile['tag']}"
 	dockerfile['proj']=${_proj}
-	[ ${auto_debug} ] && log "proj:${dockerfile['proj']}"
+	[ ${auto_option_debug} ] && log "proj:${dockerfile['proj']}"
 }
 
 dockerfile_skip() {
 
 	# testing
-	[ ${auto_noskip} ] && return 1 # 1=false, don't skip
+	[ ${auto_option_noskip} ] && return 1 # 1=false, don't skip
 
 	local _distro=${dockerfile["distro"]}
 	local _from="${dockerfile["from"],,}" # change to lowercase
@@ -63,24 +63,24 @@ dockerfile_skip() {
 	#echo ${_from}, ${_tag}, ${_pkg}
 
 	if [[ ${_from} == *" as "* ]]; then
-		[ ${auto_debug} ] && log "Has AS"
+		[ ${auto_option_debug} ] && log "Has AS"
 		return 0 # 0=true, skip, not simple
 	fi
 	if [[ ${distro_tags} != *"${_distro}:${_tag}"* ]]; then
-		[ ${auto_debug} ] && log "distro:tag no match"
+		[ ${auto_option_debug} ] && log "distro:tag no match"
 		return 0 # 0=true, skip, not edge/latest
 	fi
 	local _db_pkg_ver=$(auto_db_pkg_ver ${_distro} ${_tag} ${_pkg})
 	if [[ -z ${_db_pkg_ver} ]]; then
-		[ ${auto_debug} ] && log "PKG not found"
+		[ ${auto_option_debug} ] && log "PKG not found"
 		return 0 # 0=true, skip, pkg not found
 	fi
 	if [[ "${_ver}" == "${_db_pkg_ver}" ]]; then
-		[ ${auto_debug} ] && log "PKG no update"
+		[ ${auto_option_debug} ] && log "PKG no update"
 		return 0 # 0=true, skip, same version
 	fi
 	if [[ "${_ver}" > "${_db_pkg_ver}" ]]; then
-		[ ${auto_debug} ] && log "PKG newer than db"
+		[ ${auto_option_debug} ] && log "PKG newer than db"
 		return 0 # 0=true, skip, doesn't make sense, oh well ...
 	fi
 
@@ -113,19 +113,19 @@ dockerfile_update() {
 
 	# version
 	if [ -n "${_new_ver}" ]; then
-		[ ${auto_debug} ] && log "${_old_ver} '->' ${_new_ver}"
+		[ ${auto_option_debug} ] && log "${_old_ver} '->' ${_new_ver}"
 		sed -i "s/${_old_ver}/${_new_ver}/g" ${_file}
 	fi
 
 	# maintainers
 	_action="s#^LABEL maintainers=.*#LABEL maintainers=\"${auto_git_maintainers}\"#g"
-	[ ${auto_debug} ] && log "_action: ${_action}"
+	[ ${auto_option_debug} ] && log "_action: ${_action}"
 	sed -i "${_action}" ${_file}
 
 	# usage
 	_usage="${auto_git_maintainers_url}/${dockerfile[proj]}/blob/master/README.md"
 	_action="s#^LABEL usage=.*#LABEL usage=\"${_usage}\"#g"
-	[ ${auto_debug} ] && log "_action: ${_action}"
+	[ ${auto_option_debug} ] && log "_action: ${_action}"
 	sed -i "${_action}" ${_file}
 }
 
@@ -180,11 +180,11 @@ proj_update() {
 
 		# dockerfile_skip use global var dockerfile
 		if dockerfile_skip; then
-			if [ ${auto_debug} ]; then
+			if [ ${auto_option_debug} ]; then
 				log "${_dir_proj} skipped"
 			fi
 		else
-			[ ${auto_debug} ] && log "${_dir_proj} processing"
+			[ ${auto_option_debug} ] && log "${_dir_proj} processing"
 			# Staging dir
 			local _dir_stg=${auto_stg_root}/${dockerfile[proj]}
 			# Delete if staging dir exist
@@ -200,7 +200,7 @@ proj_update() {
 			if [ ${_rtn} -eq 0 ]; then
 				readme_update ${_dir_stg}
 				license_update ${_dir_stg}
-				if [ ${auto_save} ]; then
+				if [ ${auto_option_save} ]; then
 					# Copy from staging to project
 					for _j in Dockerfile README.md LICENSE; do
 						CMD="cp ${_dir_stg}/${_j} ${_dir_proj}/"
@@ -208,7 +208,7 @@ proj_update() {
 						$CMD
 					done
 					# Git commit & tag
-					if [[ ${auto_commit} ]]; then
+					if [[ ${auto_option_commit} ]]; then
 						local _curr_dir=$(pwd)
 						cd ${_dir_proj}
 						CMD="git add ."
@@ -224,10 +224,10 @@ proj_update() {
 					fi
 				fi
 			fi
-			[ ${auto_debug} ] && log "${_dir_proj} processed"
+			[ ${auto_option_debug} ] && log "${_dir_proj} processed"
 		fi
 	else
-		if [ ${auto_debug} ]; then
+		if [ ${auto_option_debug} ]; then
 			log "${_dir_proj} no Dockerfile"
 		fi
 	fi
@@ -239,10 +239,10 @@ auto_db_read
 [ ! -d ${auto_stg_root} ] && RUN_CMD "mkdir -p ${auto_stg_root}"
 
 distro_branch_update
-[ ${auto_debug} ] && log "${distro_tags}"
+[ ${auto_option_debug} ] && log "${distro_tags}"
 
 for _docker in ${auto_proj_prefix}*; do
-	[ ${auto_debug} ] && log "---"
-	[ ${auto_debug} ] && log "${_docker}"
+	[ ${auto_option_debug} ] && log "---"
+	[ ${auto_option_debug} ] && log "${_docker}"
 	proj_update ${_docker}
 done

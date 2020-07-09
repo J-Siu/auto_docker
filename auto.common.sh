@@ -25,20 +25,24 @@ common_option() {
 	for i in ${@}; do
 		case ${i} in
 		"-commit")
-			auto_commit=true # if defined/non-empty, commit & tag
-			[ ${auto_debug} ] && log "Commit"
+			auto_option_commit=true # if defined/non-empty, commit & tag
+			[ ${auto_option_debug} ] && log "Commit"
 			;;
 		"-debug")
-			auto_debug=true # if defined/non-empty, debug mode
-			[ ${auto_debug} ] && log "Debug"
+			auto_option_debug=true # if defined/non-empty, debug mode
+			[ ${auto_option_debug} ] && log "Debug"
 			;;
 		"-save")
-			auto_save=true # if defined/non-empty, write back to project
-			[ ${auto_debug} ] && log "Dryrun"
+			auto_option_save=true # if defined/non-empty, write back to project
+			[ ${auto_option_debug} ] && log "Dryrun"
 			;;
 		"-noskip")
-			auto_noskip=true # if defined/non-empty, process all project even no update
-			[ ${auto_debug} ] && log "No Skip"
+			auto_option_noskip=true # if defined/non-empty, process all project even no update
+			[ ${auto_option_debug} ] && log "No Skip"
+			;;
+		"-updatedb")
+			auto_option_db_update=true # if defined/non-empty, process all project even no update
+			[ ${auto_option_debug} ] && log "Update DB"
 			;;
 		*)
 			log "Unknown option"
@@ -51,7 +55,7 @@ common_option() {
 RUN_CMD() {
 	CMD=$1
 
-	[ ${auto_debug} ] && log "$CMD"
+	[ ${auto_option_debug} ] && log "$CMD"
 
 	$CMD
 	RTN=$?
@@ -79,7 +83,7 @@ auto_db_read() {
 
 		local _db_path=${auto_db_root}/${_i}/${auto_db_file}
 
-		[ ${auto_debug} ] && log "auto_db_read:${_db_path}"
+		[ ${auto_option_debug} ] && log "auto_db_read:${_db_path}"
 
 		if [ -f ${_db_path} ]; then
 			local _idx=''

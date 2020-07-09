@@ -39,7 +39,7 @@ dockerfile_get() {
 		dockerfile[${_i}]=${_val}
 		[ ${auto_option_debug} ] && log "${_i}:${dockerfile[${_i}]}"
 	done
-	dockerfile["from"]=$(grep "^FROM\ " ${_dockerfile_path} | cut -d' ' -f2- | tail -1)
+	dockerfile["from"]=$(grep "^FROM\ " ${_dockerfile_path} | cut -d' ' -f2- | head -1)
 	[ ${auto_option_debug} ] && log "from:${dockerfile['from']}"
 	dockerfile['distro']=${dockerfile['from']%:*}
 	[ ${auto_option_debug} ] && log "distro:${dockerfile['distro']}"
@@ -63,24 +63,24 @@ dockerfile_skip() {
 	#echo ${_from}, ${_tag}, ${_pkg}
 
 	if [[ ${_from} == *" as "* ]]; then
-		[ ${auto_option_debug} ] && log "Has AS"
+		[ ${auto_option_debug} ] && log "Dockerfile FROM line Has AS"
 		return 0 # 0=true, skip, not simple
 	fi
 	if [[ ${distro_tags} != *"${_distro}:${_tag}"* ]]; then
-		[ ${auto_option_debug} ] && log "distro:tag no match"
+		[ ${auto_option_debug} ] && log "${distro_tags} no match"
 		return 0 # 0=true, skip, not edge/latest
 	fi
 	local _db_pkg_ver=$(auto_db_pkg_ver ${_distro} ${_tag} ${_pkg})
 	if [[ -z ${_db_pkg_ver} ]]; then
-		[ ${auto_option_debug} ] && log "PKG not found"
+		[ ${auto_option_debug} ] && log "${_pkg} not found"
 		return 0 # 0=true, skip, pkg not found
 	fi
 	if [[ "${_ver}" == "${_db_pkg_ver}" ]]; then
-		[ ${auto_option_debug} ] && log "PKG no update"
+		[ ${auto_option_debug} ] && log "${_pkg} no update"
 		return 0 # 0=true, skip, same version
 	fi
 	if [[ "${_ver}" > "${_db_pkg_ver}" ]]; then
-		[ ${auto_option_debug} ] && log "PKG newer than db"
+		[ ${auto_option_debug} ] && log "${_pkg} ${_ver} newer than ${_db_pkg_ver} in db"
 		return 0 # 0=true, skip, doesn't make sense, oh well ...
 	fi
 
@@ -235,14 +235,35 @@ proj_update() {
 
 # --- Main ---
 
+[ ${auto_option_debug} ] && log "auto.proj.sh"
+
 auto_db_read
+
 [ ! -d ${auto_stg_root} ] && RUN_CMD "mkdir -p ${auto_stg_root}"
 
 distro_branch_update
-[ ${auto_option_debug} ] && log "${distro_tags}"
 
-for _docker in ${auto_proj_prefix}*; do
+if [ ${auto_option_debug} ]; then
+	log "distro_tags:${distro_tags}"
+	local _i
+	for _i in ${auto_option_project[@]}; do
+		log "auto_option_proj:${_i}"
+	done
+	for _i in ${auto_option_prefix[@]}; do
+		log "auto_option_proj:${_i}"
+	done
+fi
+
+for _proj in ${auto_option_project}; do
 	[ ${auto_option_debug} ] && log "---"
-	[ ${auto_option_debug} ] && log "${_docker}"
-	proj_update ${_docker}
+	[ ${auto_option_debug} ] && log "${_proj}"
+	proj_update ${_proj}
+done
+
+for _prefix in ${auto_option_prefix}; do
+	for _proj in ${_prefix}*; do
+		[ ${auto_option_debug} ] && log "---"
+		[ ${auto_option_debug} ] && log "${_proj}"
+		proj_update ${_proj}
+	done
 done

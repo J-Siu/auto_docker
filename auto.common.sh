@@ -32,8 +32,8 @@ common_option() {
 			auto_debug=true # if defined/non-empty, debug mode
 			[ ${auto_debug} ] && log "Debug"
 			;;
-		"-dryrun")
-			auto_dryrun=true # if defined/non-empty, stage only, no write back, no git commit
+		"-save")
+			auto_save=true # if defined/non-empty, write back to project
 			[ ${auto_debug} ] && log "Dryrun"
 			;;
 		"-noskip")

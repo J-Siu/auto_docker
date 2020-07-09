@@ -200,8 +200,7 @@ proj_update() {
 			if [ ${_rtn} -eq 0 ]; then
 				readme_update ${_dir_stg}
 				license_update ${_dir_stg}
-				# Check DRYRUN
-				if [ ${auto_dryrun} ]; then
+				if [ ${auto_save} ]; then
 					# Copy from staging to project
 					for _j in Dockerfile README.md LICENSE; do
 						CMD="cp ${_dir_stg}/${_j} ${_dir_proj}/"

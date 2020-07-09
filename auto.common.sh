@@ -2,6 +2,9 @@
 CONF=auto.conf
 source ${CONF}
 
+declare -a auto_option_project
+declare -a auto_option_prefix
+
 # Read status file
 status_get() {
 	[ -f ${file_status} ] && source ${file_status}
@@ -20,32 +23,75 @@ log() {
 	echo -e "log:$@"
 }
 
+usage() {
+	echo "Usage:"
+	echo "  ${0} [flags]"
+	echo "Flags:"
+	echo -e "  -commit                  Apply git commit and tag"
+	echo -e "  -debug                   Show debug log"
+	echo -e "  -h, -help                Show help"
+	echo -e "  -noskip                  Process all projects"
+	echo -e "  -pref, -prefix string    Path prefix for projects"
+	echo -e "  -proj, -project string   Path of project"
+	echo -e "  -save                    Write back to project folder"
+	echo -e "  -updatedb                Update package database"
+
+	for _f in ${!_flags[@]}; do
+		echo -e "  ${_f}        ${_flags[${_f}]}"
+	done
+}
+
 # ${@}
 common_option() {
+	local _state=1
 	for i in ${@}; do
-		case ${i} in
-		"-commit")
-			auto_option_commit=true # if defined/non-empty, commit & tag
-			[ ${auto_option_debug} ] && log "Commit"
+		case ${_state} in
+		1)
+			case ${i} in
+			"-commit")
+				auto_option_commit=true # if defined/non-empty, commit & tag
+				[ ${auto_option_debug} ] && log "Commit"
+				;;
+			"-debug")
+				auto_option_debug=true # if defined/non-empty, debug mode
+				[ ${auto_option_debug} ] && log "Debug"
+				;;
+			"-save")
+				auto_option_save=true # if defined/non-empty, write back to project
+				[ ${auto_option_debug} ] && log "Dryrun"
+				;;
+			"-noskip")
+				auto_option_noskip=true # if defined/non-empty, process all project even no update
+				[ ${auto_option_debug} ] && log "No Skip"
+				;;
+			"-updatedb")
+				auto_option_db_update=true # if defined/non-empty, process all project even no update
+				[ ${auto_option_debug} ] && log "Update DB"
+				;;
+			"-proj" | "-project")
+				_state=2
+				;;
+			"-pref" | "-prefix")
+				_state=3
+				;;
+			"-h" | "-help")
+				usage
+				exit 0
+				;;
+			*)
+				log "Unknown option"
+				usage
+				exit 0
+				;;
+			esac
 			;;
-		"-debug")
-			auto_option_debug=true # if defined/non-empty, debug mode
-			[ ${auto_option_debug} ] && log "Debug"
+		2)
+			auto_option_project+=(${i})
+			_state=1
 			;;
-		"-save")
-			auto_option_save=true # if defined/non-empty, write back to project
-			[ ${auto_option_debug} ] && log "Dryrun"
-			;;
-		"-noskip")
-			auto_option_noskip=true # if defined/non-empty, process all project even no update
-			[ ${auto_option_debug} ] && log "No Skip"
-			;;
-		"-updatedb")
-			auto_option_db_update=true # if defined/non-empty, process all project even no update
-			[ ${auto_option_debug} ] && log "Update DB"
-			;;
-		*)
-			log "Unknown option"
+		3)
+			auto_option_prefix+=(${i})
+			_state=1
 			;;
 		esac
 	done

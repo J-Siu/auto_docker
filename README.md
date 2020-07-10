@@ -390,7 +390,7 @@ latest::krfb-lang
 
 ### Repository
 
-- [docker_compose](https://github.com/J-Siu/docker_unbound)
+- [docker_compose](https://github.com/J-Siu/auto_docker)
 
 ### Contributors
 

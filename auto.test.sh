@@ -9,7 +9,7 @@ common_option ${@}
 # This is for testing
 
 # Print config
-set|grep ^auto_
+set | grep ^auto_
 
 echo db update
 time auto_db_update ${@}
@@ -18,8 +18,7 @@ time auto_db_read
 
 # test pkg version
 echo
-CMD="auto_db_pkg_ver alpine edge postfix"
-echo $CMD
-$CMD
+RUN_CMD "auto_db_dump"
+RUN_CMD "auto_db_pkg_ver alpine edge postfix"
 
-auto_proj_update ${@}
+#auto_proj_update ${@}

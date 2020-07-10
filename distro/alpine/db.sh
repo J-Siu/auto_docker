@@ -12,7 +12,7 @@ _my_dir=${_my_path/%\/${_my_name}/}
 
 source ${_my_dir}/${auto_db_conf}
 
-_db_path=${auto_db_root}/${my_distro_name}/${auto_db_file}
+_db_path=${auto_db_root}/${my_distro_name}/${auto_db_data}
 
 # --- db.sh common end ---
 

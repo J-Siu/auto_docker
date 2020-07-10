@@ -22,7 +22,7 @@ distro_branch_update() {
 	for _i in ${auto_distro_root}/*; do
 		source ${_i}/${auto_db_conf}
 		for _j in ${tags}; do
-			distro_tags+=" ${my_distro_name}:${_j}"
+			distro_tags+=" ${_i}:${_j}"
 		done
 	done
 }
@@ -118,15 +118,18 @@ dockerfile_update() {
 	fi
 
 	# maintainers
-	_action="s#^LABEL maintainers=.*#LABEL maintainers=\"${auto_git_maintainers}\"#g"
-	[ ${auto_option_debug} ] && log "_action: ${_action}"
-	sed -i "${_action}" ${_file}
-
+	if [ -n "${auto_git_maintainers}" ]; then
+		_action="s#^LABEL maintainers=.*#LABEL maintainers=\"${auto_git_maintainers}\"#g"
+		[ ${auto_option_debug} ] && log "_action: ${_action}"
+		sed -i "${_action}" ${_file}
+	fi
 	# usage
-	_usage="${auto_git_maintainers_url}/${dockerfile[proj]}/blob/master/README.md"
-	_action="s#^LABEL usage=.*#LABEL usage=\"${_usage}\"#g"
-	[ ${auto_option_debug} ] && log "_action: ${_action}"
-	sed -i "${_action}" ${_file}
+	if [ -n "${auto_git_maintainers_url}" ]; then
+		_usage="${auto_git_maintainers_url}/${dockerfile[proj]}/blob/master/README.md"
+		_action="s#^LABEL usage=.*#LABEL usage=\"${_usage}\"#g"
+		[ ${auto_option_debug} ] && log "_action: ${_action}"
+		sed -i "${_action}" ${_file}
+	fi
 }
 
 # ${1} staging dir
@@ -188,9 +191,9 @@ proj_update() {
 			# Staging dir
 			local _dir_stg=${auto_stg_root}/${dockerfile[proj]}
 			# Delete if staging dir exist
-			[ -d ${_dir_stg} ] && rm -rf ${_dir_stg}
+			[ -d ${_dir_stg} ] && RUN_CMD "rm -rf ${_dir_stg}"
 			# Copy project to staging
-			cp -r ${_dir_proj} ${auto_stg_root}/
+			RUN_CMD "cp -r ${_dir_proj} ${auto_stg_root}/"
 			# Update Dockerfile
 			dockerfile_update ${_dir_stg}
 			# Build
@@ -203,28 +206,20 @@ proj_update() {
 				if [ ${auto_option_save} ]; then
 					# Copy from staging to project
 					for _j in Dockerfile README.md LICENSE; do
-						CMD="cp ${_dir_stg}/${_j} ${_dir_proj}/"
-						echo $CMD
-						$CMD
+						RUN_CMD "cp ${_dir_stg}/${_j} ${_dir_proj}/"
 					done
 					# Git commit & tag
 					if [[ ${auto_option_commit} ]]; then
 						local _curr_dir=$(pwd)
-						cd ${_dir_proj}
-						CMD="git add ."
-						echo $CMD
-						$CMD
-						CMD="git commit -a -m ${dockerfile["version"]}"
-						echo $CMD
-						$CMD
-						CMD="git tag -a ${dockerfile["version"]} -m ${dockerfile["version"]}"
-						echo $CMD
-						$CMD
-						cd ${_curr_dir}
+						RUN_CMD "cd ${_dir_proj}"
+						RUN_CMD "git add ."
+						RUN_CMD "git commit -a -m ${dockerfile["version"]}"
+						[ ${auto_option_tag} ] && RUN_CMD "git tag -a ${dockerfile["version"]} -m ${dockerfile["version"]}"
+						RUN_CMD "cd ${_curr_dir}"
 					fi
 				fi
 			fi
-			[ ${auto_option_debug} ] && log "${_dir_proj} processed"
+			log "${_dir_proj} processed"
 		fi
 	else
 		if [ ${auto_option_debug} ]; then
@@ -245,7 +240,6 @@ distro_branch_update
 
 if [ ${auto_option_debug} ]; then
 	log "distro_tags:${distro_tags}"
-	local _i
 	for _i in ${auto_option_project[@]}; do
 		log "auto_option_proj:${_i}"
 	done

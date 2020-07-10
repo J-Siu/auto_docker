@@ -27,7 +27,8 @@ usage() {
 	echo "Usage:"
 	echo "  ${0} [flags]"
 	echo "Flags:"
-	echo -e "  -commit                  Apply git commit and tag"
+	echo -e "  -commit                  Apply git commit. Only work with -save"
+	echo -e "  -tag                     Apply git tag. Only work with -commit"
 	echo -e "  -debug                   Show debug log"
 	echo -e "  -h, -help                Show help"
 	echo -e "  -noskip                  Process all projects"
@@ -35,10 +36,6 @@ usage() {
 	echo -e "  -proj, -project string   Path of project"
 	echo -e "  -save                    Write back to project folder"
 	echo -e "  -updatedb                Update package database"
-
-	for _f in ${!_flags[@]}; do
-		echo -e "  ${_f}        ${_flags[${_f}]}"
-	done
 }
 
 # ${@}
@@ -49,20 +46,24 @@ common_option() {
 		1)
 			case ${i} in
 			"-commit")
-				auto_option_commit=true # if defined/non-empty, commit & tag
-				[ ${auto_option_debug} ] && log "Commit"
+				auto_option_commit=true # if defined/non-empty, git commit
+				[ ${auto_option_debug} ] && log "enabled Commit"
+				;;
+			"-tag")
+				auto_option_tag=true # if defined/non-empty, git tag
+				[ ${auto_option_debug} ] && log "enabled Tag"
 				;;
 			"-debug")
 				auto_option_debug=true # if defined/non-empty, debug mode
-				[ ${auto_option_debug} ] && log "Debug"
+				[ ${auto_option_debug} ] && log "enabled Debug"
 				;;
 			"-save")
 				auto_option_save=true # if defined/non-empty, write back to project
-				[ ${auto_option_debug} ] && log "Dryrun"
+				[ ${auto_option_debug} ] && log "enabled Save"
 				;;
 			"-noskip")
 				auto_option_noskip=true # if defined/non-empty, process all project even no update
-				[ ${auto_option_debug} ] && log "No Skip"
+				[ ${auto_option_debug} ] && log "enabled No Skip"
 				;;
 			"-updatedb")
 				auto_option_db_update=true # if defined/non-empty, process all project even no update
@@ -99,12 +100,12 @@ common_option() {
 
 # ${1} CMD
 RUN_CMD() {
-	CMD=$1
+	local CMD="${@}"
 
 	[ ${auto_option_debug} ] && log "$CMD"
 
 	$CMD
-	RTN=$?
+	local RTN=$?
 
 	[ ${RTN} -ne 0 ] && log "$CMD error:${RTN}"
 
@@ -113,21 +114,20 @@ RUN_CMD() {
 
 auto_db_update() {
 	# create/update db
-	for _i in ${auto_distro}; do
-		local CMD="${auto_distro_root}/${_i}/${auto_db_script} ${@}"
-		RUN_CMD "${CMD}"
+	for _i in ${auto_distro_root}/*; do
+		RUN_CMD "${_i}/${auto_db_script} ${@}"
 	done
 }
 
 auto_proj_update() {
-	local CMD="${auto_proj_script} ${@}"
-	RUN_CMD "${CMD}"
+	RUN_CMD "${auto_proj_script} ${@}"
 }
 
 auto_db_read() {
-	for _i in ${auto_distro}; do
+	for _i in ${auto_db_root}/*; do
 
-		local _db_path=${auto_db_root}/${_i}/${auto_db_file}
+		local _db_path=${_i}/${auto_db_data}
+		local _distro=$(basename ${_i})
 
 		[ ${auto_option_debug} ] && log "auto_db_read:${_db_path}"
 
@@ -145,7 +145,7 @@ auto_db_read() {
 					2)
 						# version
 						_ver=${_line}
-						db_pkg+=(["${_i}::${_idx}"]=${_ver})
+						db_pkg+=(["${_distro}::${_idx}"]=${_ver})
 						;;
 					esac
 					((_state = 3 - _state))
@@ -163,4 +163,10 @@ auto_db_pkg_ver() {
 	_tag=${2}
 	_pkg=${3}
 	echo ${db_pkg["${_dis}::${_tag}::${_pkg}"]}
+}
+
+auto_db_dump() {
+	for _i in ${!db_pkg[@]}; do
+		echo "${_i}=${db_pkg[${_i}]}"
+	done
 }

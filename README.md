@@ -51,6 +51,11 @@ A framework for automatically updating simple docker project.
 
 ### Usage
 
+```sh
+git clone https://github.com/J-Siu/auto_docker.git
+cd auto_docker
+```
+
 ```txt
 ./auto.sh -h -debug
 Usage:

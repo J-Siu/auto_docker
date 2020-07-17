@@ -210,11 +210,12 @@ proj_update() {
 					done
 					# Git commit & tag
 					if [[ ${auto_option_commit} ]]; then
+						local _new_ver=$(auto_db_pkg_ver ${dockerfile["distro"]} ${dockerfile["tag"]} ${dockerfile["name"]})
 						local _curr_dir=$(pwd)
 						RUN_CMD "cd ${_dir_proj}"
 						RUN_CMD "git add ."
-						RUN_CMD "git commit -a -m ${dockerfile["version"]}"
-						[ ${auto_option_tag} ] && RUN_CMD "git tag -a ${dockerfile["version"]} -m ${dockerfile["version"]}"
+						RUN_CMD "git commit -a -m ${_new_ver}"
+						[ ${auto_option_tag} ] && RUN_CMD "git tag -a ${_new_ver} -m ${_new_ver}"
 						RUN_CMD "cd ${_curr_dir}"
 					fi
 				fi

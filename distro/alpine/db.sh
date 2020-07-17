@@ -16,34 +16,24 @@ _db_path=${auto_db_root}/${my_distro_name}/${auto_db_data}
 
 # --- db.sh common end ---
 
-# Get Alpine package db
-#	- Check Status
-#	if time up or db not exist
-#		get alpine tag, ver, create db
-#	else
-# 	read db
-# ${1} alpine version
 alpine_apkindex2db() {
-	if $(_db_refresh) || [ ! -f ${_db_path} ]; then
+	# Remove old db
+	[ -f ${_db_path} ] && rm ${_db_path}
 
-		# Remove old db
-		[ -f ${_db_path} ] && rm ${_db_path}
-
-		local _url=''
-		local _dir_repo=''
-		for _i in ${branch}; do
-			echo ${_i} repo : ${repo[${_i}]}
-			for _j in ${repo[${_i}]}; do
-				_url="http://dl-cdn.alpinelinux.org/alpine/${_i}/${_j}/${arch}/APKINDEX.tar.gz"
-				_dir_repo=${auto_db_root}/${my_distro_name}/${_i}/${_j}
-				echo ${_dir_repo}
-				mkdir -p ${_dir_repo}
-				curl -s ${_url} | tar zx -C ${_dir_repo}
-				# convert to auto db
-				_alpine_apkindex2db ${_i} ${_dir_repo}/APKINDEX
-			done
+	local _url=''
+	local _dir_repo=''
+	for _i in ${branch}; do
+		echo ${_i} repo : ${repo[${_i}]}
+		for _j in ${repo[${_i}]}; do
+			_url="http://dl-cdn.alpinelinux.org/alpine/${_i}/${_j}/${arch}/APKINDEX.tar.gz"
+			_dir_repo=${auto_db_root}/${my_distro_name}/${_i}/${_j}
+			echo ${_dir_repo}
+			mkdir -p ${_dir_repo}
+			curl -s ${_url} | tar zx -C ${_dir_repo}
+			# convert to auto db
+			_alpine_apkindex2db ${_i} ${_dir_repo}/APKINDEX
 		done
-	fi
+	done
 }
 
 # APKINDEX into array
@@ -83,12 +73,6 @@ _alpine_apkindex2db() {
 			fi
 		done <"${_apkindex}"
 	done
-}
-
-# Check if is it time to refresh db
-# return: true(0)/false(1)
-_db_refresh() {
-	return 1 # 0 == true/yes, 1 == false/no
 }
 
 # Get Alpine docker image tag from hub -- NOT USED

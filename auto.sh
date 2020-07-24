@@ -10,4 +10,6 @@ common_option ${@}
 
 [ ${auto_option_db_update} ] && auto_db_update ${@}
 
+rm -rf ${auto_stg_root}
+
 auto_proj_update ${@}

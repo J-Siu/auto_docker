@@ -10,9 +10,6 @@ status_get() {
 	[ -f ${file_status} ] && source ${file_status}
 }
 
-# Write status file
-#status_put() {}
-
 common_test() {
 	log "This is a test."
 }

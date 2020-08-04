@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 COMMON="auto.common.sh"
 source ${COMMON}

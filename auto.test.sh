@@ -20,5 +20,3 @@ time auto_db_read
 echo
 RUN_CMD "auto_db_dump"
 RUN_CMD "auto_db_pkg_ver alpine edge postfix"
-
-#auto_proj_update ${@}

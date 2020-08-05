@@ -19,7 +19,6 @@
   - [db.sh ${auto_db_script}](#dbsh-auto_db_script)
   - [distro.conf](#distroconf)
   - [db.data ${auto_db_data}](#dbdata-auto_db_data)
-- [TODO](#todo)
 - [Repository](#repository)
 - [Contributors](#contributors)
 - [Change Log](#change-log)

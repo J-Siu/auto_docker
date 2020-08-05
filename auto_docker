@@ -1,23 +1,5 @@
 #!/usr/bin/env bash
 
-COMMON="auto.common.sh"
-source ${COMMON}
-common_option ${@}
-
-# Dockerfile array hold following:
-# FROM {from}
-# LABEL version="{version}"
-# LABEL maintainers="{maintainers}"
-# LABEL name="{name}"
-# LABEL usage="{usage}"
-# {distro} derived from {from}
-# {tag} derived from {from}
-# {proj} project/dir name
-declare -A dockerfile
-
-# List of distro::branch
-distro_tags=''
-
 distro_branch_update() {
 	for _i in ${auto_distro_root}/*; do
 		source ${_i}/${auto_db_conf}
@@ -112,19 +94,19 @@ dockerfile_update() {
 	local _new_ver=$(auto_db_pkg_ver ${dockerfile["distro"]} ${dockerfile["tag"]} ${dockerfile["name"]})
 
 	# version
-	if [ -n "${_new_ver}" ]; then
-		[ ${auto_option_debug} ] && log "${_old_ver} '->' ${_new_ver}"
-		sed -i "s/${_old_ver}/${_new_ver}/g" ${_file}
+	if [[ ${_new_ver} ]]; then
+		[ ${auto_option_debug} ] && log "${_old_ver} -> ${_new_ver}"
+		sed -i "s#${_old_ver}#${_new_ver}#g" ${_file}
 	fi
 
 	# maintainers
-	if [ -n "${auto_git_maintainers}" ]; then
+	if [[ "${auto_git_maintainers}" ]]; then
 		_action="s#^LABEL maintainers=.*#LABEL maintainers=\"${auto_git_maintainers}\"#g"
 		[ ${auto_option_debug} ] && log "_action: ${_action}"
 		sed -i "${_action}" ${_file}
 	fi
 	# usage
-	if [ -n "${auto_git_maintainers_url}" ]; then
+	if [[ "${auto_git_maintainers_url}" ]]; then
 		_usage="${auto_git_maintainers_url}/${dockerfile[proj]}/blob/master/README.md"
 		_action="s#^LABEL usage=.*#LABEL usage=\"${_usage}\"#g"
 		[ ${auto_option_debug} ] && log "_action: ${_action}"
@@ -231,11 +213,38 @@ proj_update() {
 
 # --- Main ---
 
-[ ${auto_option_debug} ] && log "auto.proj.sh"
+# Minimum bash version 4
+[[ ${BASH_VERSION} ]] && [[ ${BASH_VERSION} < 4 ]] && echo "${BASH_VERSION} < 4" && exit 1
+
+COMMON="auto.common.sh"
+source ${COMMON}
+common_option ${@}
+
+# Dockerfile array hold following:
+# FROM {from}
+# LABEL version="{version}"
+# LABEL maintainers="{maintainers}"
+# LABEL name="{name}"
+# LABEL usage="{usage}"
+# {distro} derived from {from}
+# {tag} derived from {from}
+# {proj} project/dir name
+declare -A dockerfile
+
+# List of distro::branch
+distro_tags=''
+
+[ ${auto_option_debug} ] && log "$(set | grep ^auto_ | sort)"
+
+[ ${auto_option_db_update} ] && auto_db_update ${@}
+
+[[ ! ${auto_option_project} ]] && [[ ! ${auto_option_prefix} ]] && [ ${auto_option_db_update} ] && exit 0
+[[ ! ${auto_option_project} ]] && [[ ! ${auto_option_prefix} ]] && usage && exit 0
 
 auto_db_read
 
-[ ! -d ${auto_stg_root} ] && RUN_CMD "mkdir -p ${auto_stg_root}"
+[ -d ${auto_stg_root} ] && RUN_CMD "rm -rf ${auto_stg_root}"
+RUN_CMD "mkdir -p ${auto_stg_root}"
 
 distro_branch_update
 

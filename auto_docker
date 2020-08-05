@@ -96,21 +96,21 @@ dockerfile_update() {
 	# version
 	if [[ ${_new_ver} ]]; then
 		[ ${auto_option_debug} ] && log "${_old_ver} -> ${_new_ver}"
-		sed -i "s#${_old_ver}#${_new_ver}#g" ${_file}
+		${SED_INLINE} "s#${_old_ver}#${_new_ver}#g" ${_file}
 	fi
 
 	# maintainers
 	if [[ "${auto_git_maintainers}" ]]; then
 		_action="s#^LABEL maintainers=.*#LABEL maintainers=\"${auto_git_maintainers}\"#g"
 		[ ${auto_option_debug} ] && log "_action: ${_action}"
-		sed -i "${_action}" ${_file}
+		${SED_INLINE} "${_action}" ${_file}
 	fi
 	# usage
 	if [[ "${auto_git_maintainers_url}" ]]; then
 		_usage="${auto_git_maintainers_url}/${dockerfile[proj]}/blob/master/README.md"
 		_action="s#^LABEL usage=.*#LABEL usage=\"${_usage}\"#g"
 		[ ${auto_option_debug} ] && log "_action: ${_action}"
-		sed -i "${_action}" ${_file}
+		${SED_INLINE} "${_action}" ${_file}
 	fi
 }
 
@@ -120,7 +120,7 @@ license_update() {
 	cp LICENSE ${_file}
 	# Update copyright year
 	local _year=$(date +%Y)
-	sed -i "s/^Copyright (c).*/Copyright (c) ${_year}/g" ${_file}
+	${SED_INLINE} "s/^Copyright (c).*/Copyright (c) ${_year}/g" ${_file}
 }
 
 # ${1} staging dir
@@ -130,13 +130,13 @@ readme_update() {
 
 	# Update Change Log before <!--CHANGE-LOG-END-->
 	local _log="- ${_new_ver}"
-	sed -i "s/${auto_log_end}/${_log}\n${auto_log_end}/g" ${_file}
+	${SED_INLINE} "s/${auto_log_end}/${_log}\n${auto_log_end}/g" ${_file}
 	local _log="  - Auto update to ${_new_ver}"
-	sed -i "s/${auto_log_end}/${_log}\n${auto_log_end}/g" ${_file}
+	${SED_INLINE} "s/${auto_log_end}/${_log}\n${auto_log_end}/g" ${_file}
 
 	# Update copyright year
 	local _year=$(date +%Y)
-	sed -i "s/^Copyright (c).*/Copyright (c) ${_year}/g" ${_file}
+	${SED_INLINE} "s/^Copyright (c).*/Copyright (c) ${_year}/g" ${_file}
 
 	# #--- One time
 	# local _old=''
@@ -144,11 +144,11 @@ readme_update() {
 
 	# _old="https://github.com/J-Siu/docker_compose"
 	# _new="https://github.com/J-Siu/${dockerfile[proj]}"
-	# sed -i "s#${_old}#${_new}#g" ${_file}
+	# ${SED_INLINE} "s#${_old}#${_new}#g" ${_file}
 
 	# _old="cd docker/${dockerfile["pkg"]}"
 	# _new="cd ${dockerfile[proj]}"
-	# sed -i "s#^${_old}.*#${_new}#g" ${_file}
+	# ${SED_INLINE} "s#^${_old}.*#${_new}#g" ${_file}
 }
 
 # ${1} project dir
@@ -222,6 +222,13 @@ proj_update() {
 COMMON="auto.common.sh"
 source ${COMMON}
 common_option ${@}
+
+SED_INLINE=''
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  SED_INLINE="sed -i \'\' "
+else
+  SED_INLINE="sed -i "
+fi
 
 # Dockerfile array hold following:
 # FROM {from}

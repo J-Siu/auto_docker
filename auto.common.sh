@@ -28,8 +28,9 @@ usage() {
 	echo -e "  -tag                     Apply git tag. Only work with -commit"
 	echo -e "  -debug                   Show debug log"
 	echo -e "  -h, -help                Show help"
-	echo -e "  -noskip                  Process all projects"
-	echo -e "  -pref, -prefix string    Path prefix for projects"
+	echo -e "  -nobuild                 Do not perform docker build"
+	echo -e "  -noskip                  Do not skip project"
+	echo -e "  -pref, -prefix string    Path prefix for project"
 	echo -e "  -proj, -project string   Path of project"
 	echo -e "  -save                    Write back to project folder"
 	echo -e "  -updatedb                Update package database"
@@ -57,6 +58,10 @@ common_option() {
 			"-save")
 				auto_option_save=true # if defined/non-empty, write back to project
 				[ ${auto_option_debug} ] && log "enabled Save"
+				;;
+			"-nobuild")
+				auto_option_nobuild=true # if defined/non-empty, will not perform docker build
+				[ ${auto_option_debug} ] && log "enabled No Build"
 				;;
 			"-noskip")
 				auto_option_noskip=true # if defined/non-empty, process all project even no update
@@ -114,10 +119,6 @@ auto_db_update() {
 	for _i in ${auto_distro_root}/*; do
 		RUN_CMD "${_i}/${auto_db_script} ${@}"
 	done
-}
-
-auto_proj_update() {
-	RUN_CMD "${auto_proj_script} ${@}"
 }
 
 auto_db_read() {

@@ -179,8 +179,11 @@ proj_update() {
 			# Update Dockerfile
 			dockerfile_update ${_dir_stg}
 			# Build
-			dockerfile_build ${_dir_stg} ${dockerfile["name"]}
-			local _rtn=$?
+			local _rtn=0
+			if [ ! ${auto_option_nobuild} ]; then
+				dockerfile_build ${_dir_stg} ${dockerfile["name"]}
+				_rtn=$?
+			fi
 			# If build successful
 			if [ ${_rtn} -eq 0 ]; then
 				readme_update ${_dir_stg}

@@ -1,6 +1,7 @@
 ## Auto Docker
 <!-- TOC -->
 
+- [Purpose](#purpose)
 - [Features](#features)
 - [Usage](#usage)
 - [Workflow](#workflow)
@@ -57,15 +58,17 @@ cd auto_docker
 ```
 
 ```txt
-./auto.sh -h -debug
+./auto_docker
 Usage:
-  ./auto.sh [flags]
+  ./auto_docker [flags]
 Flags:
-  -commit                  Apply git commit and tag
+  -commit                  Apply git commit. Only work with -save
+  -tag                     Apply git tag. Only work with -commit
   -debug                   Show debug log
   -h, -help                Show help
-  -noskip                  Process all projects
-  -pref, -prefix string    Path prefix for projects
+  -nobuild                 Do not perform docker build
+  -noskip                  Do not skip project
+  -pref, -prefix string    Path prefix for project
   -proj, -project string   Path of project
   -save                    Write back to project folder
   -updatedb                Update package database
@@ -95,7 +98,7 @@ Update db:
 
 ```sh
 cd auto_docker
-./auto.sh -debug -updatedb
+./auto_docker -debug -updatedb
 ```
 
 Process 1 docker project `docker_amule`:
@@ -104,21 +107,21 @@ Test run only ...
 
 ```sh
 cd auto_docker
-./auto.sh -debug -project ../docker_amule
+./auto_docker -debug -project ../docker_amule
 ```
 
 Save ...
 
 ```sh
 cd auto_docker
-./auto.sh -debug -project ../docker_amule -save
+./auto_docker -debug -project ../docker_amule -save
 ```
 
 Git commit too ...
 
 ```sh
 cd auto_docker
-./auto.sh -debug -project ../docker_amule -save -commit
+./auto_docker -debug -project ../docker_amule -save -commit
 ```
 
 Process all docker projects `docker_`, use `-prefix`:
@@ -127,7 +130,7 @@ Test run only ...
 
 ```sh
 cd auto_docker
-./auto.sh -debug -prefix ../docker_
+./auto_docker -debug -prefix ../docker_
 ```
 
 Use `-project` to specify single project
@@ -142,7 +145,7 @@ Multiple `-project` and `-prefix` can be used together.
 
 ```sh
 cd auto_docker
-./auto.sh -debug -updatedb
+./auto_docker -debug -updatedb
 ```
 
 When `-updatedb` is used. All `${auto_distro_root}/<distro>/${auto_db_script}` will be executed. Each will generate a `${auto_data_root}/db/<distro>/${auto_db_data}`.
@@ -168,9 +171,7 @@ With default configuration, related file structure as follow:
 │       └── distro.conf (${auto_db_conf})
 ├── auto.common.sh
 ├── auto.conf
-├── auto.proj.sh (${auto_proj_script})
-├── auto.sh
-└── auto.test.sh
+└── auto_docker
 ```
 
 > Distro `debian` script is not available now.
@@ -181,7 +182,7 @@ A docker project is being copied under staging area ${auto_stg_root} before bein
 
 ```sh
 cd auto_docker
-./auto.sh -debug -prefix ../docker_
+./auto_docker -debug -prefix ../docker_
 ```
 
 Projects are copied into `${auto_stg_root}`:
@@ -215,7 +216,9 @@ data/ (${auto_data})
         └── start.sh
 ```
 
-If new package version is found, `Dockerfile` will be updated and `docker build` will be performed.
+If new package version is found, `Dockerfile` will be updated and a testing `docker build` will be performed.
+
+`docker build` test can be skipped with `-nobuild`.
 
 > As long as `-save` is not used, nothing will change in the original project folder. It is advice to inspect the staging files before using the `-save` option.
 
@@ -385,14 +388,6 @@ latest::krfb-lang
 20.04.2-r0
 ```
 
-### TODO
-
-- [ ] auto.proj.sh
-  - [ ] Add skeleton generation (Scaffolding)
-- [ ] Auto update master README.md table
-- [ ] Auto git push
-- [ ] Improve logging
-
 ### Repository
 
 - [docker_compose](https://github.com/J-Siu/auto_docker)
@@ -406,6 +401,15 @@ latest::krfb-lang
 - 0.9
   - Base features completed
   - README.md completed
+- 1.0
+  - Add auto clear stage
+  - Add option nobuild
+  - Clean up
+  - Fix commit and tag version
+  - Fix sed inline for MacOS
+  - Rename auto.sh -> auto_docker
+  - Update to use #!/usr/bin/env bash
+  - Update usage
 
 ### License
 

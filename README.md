@@ -30,7 +30,7 @@
 
 As more and more packages are made into docker images, keeping them up to date become a tedious task.
 
-Some image just pull package without specifying version and update means rebuilding them blindly. And there is no version info from image tag.
+Some images just pull package without specifying version and update means rebuilding them blindly. And there is no version info from image tag.
 
 Auto_Docker intend to ease this burden, at least for simple docker images that depends on single package. It can update Dockerfile, README.md, apply git commit and tag according to new version.
 

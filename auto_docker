@@ -165,11 +165,9 @@ proj_update() {
 
 		# dockerfile_skip use global var dockerfile
 		if dockerfile_skip; then
-			if [ ${auto_option_debug} ]; then
-				log "${_dir_proj} skipped"
-			fi
+			log "${_dir_proj} skipped"
 		else
-			[ ${auto_option_debug} ] && log "${_dir_proj} processing"
+			log "${_dir_proj} processing"
 			# Staging dir
 			local _dir_stg=${auto_stg_root}/${dockerfile[proj]}
 			# Delete if staging dir exist
@@ -225,9 +223,9 @@ common_option ${@}
 
 SED_INLINE=''
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  SED_INLINE="sed -i \'\' "
+	SED_INLINE="sed -i \'\' "
 else
-  SED_INLINE="sed -i "
+	SED_INLINE="sed -i "
 fi
 
 # Dockerfile array hold following:
@@ -251,7 +249,9 @@ distro_tags=''
 [[ ! ${auto_option_project} ]] && [[ ! ${auto_option_prefix} ]] && [ ${auto_option_db_update} ] && exit 0
 [[ ! ${auto_option_project} ]] && [[ ! ${auto_option_prefix} ]] && usage && exit 0
 
+log "auto_db_read ..."
 auto_db_read
+log "auto_db_read completed."
 
 [ -d ${auto_stg_root} ] && RUN_CMD "rm -rf ${auto_stg_root}"
 RUN_CMD "mkdir -p ${auto_stg_root}"

@@ -61,7 +61,7 @@ dockerfile_skip() {
 		[ ${auto_option_debug} ] && log "${_pkg} no update"
 		return 0 # 0=true, skip, same version
 	fi
-	if [[ "${_ver}" > "${_db_pkg_ver}" ]]; then
+	if [[ "${_db_pkg_ver}" != "$(ver_newer ${_ver} ${_db_pkg_ver})" ]]; then
 		[ ${auto_option_debug} ] && log "${_pkg} ${_ver} newer than ${_db_pkg_ver} in db"
 		return 0 # 0=true, skip, doesn't make sense, oh well ...
 	fi

@@ -168,3 +168,10 @@ auto_db_dump() {
 		echo "${_i}=${db_pkg[${_i}]}"
 	done
 }
+
+# ${1} version 1
+# ${2} version 2
+# return bigger version
+ver_newer() {
+	echo -e "${1}\n${2}" | sort -V | tail -1
+}

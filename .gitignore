@@ -1,4 +1,1 @@
-data
-db
-stg
-tmp
+data/**

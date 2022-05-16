@@ -1,4 +1,8 @@
-## Auto Docker
+# Auto Docker [![Paypal donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate/?business=HZF49NM9D35SJ&no_recurring=0&currency_code=CAD)
+
+Bash script for mass updating Docker project base on Alpine Linux packages.
+
+### Table Of Content
 <!-- TOC -->
 
 - [Purpose](#purpose)

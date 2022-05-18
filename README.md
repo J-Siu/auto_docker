@@ -5,6 +5,7 @@ Bash script for mass updating Docker project base on Alpine Linux packages.
 ### Table Of Content
 <!-- TOC -->
 
+- [Table Of Content](#table-of-content)
 - [Purpose](#purpose)
 - [Features](#features)
 - [Usage](#usage)
@@ -29,7 +30,7 @@ Bash script for mass updating Docker project base on Alpine Linux packages.
 - [License](#license)
 
 <!-- /TOC -->
-
+<!--more-->
 ### Purpose
 
 As more and more packages are made into docker images, keeping them up to date become a tedious task.
